@@ -1,0 +1,33 @@
+version: "3.8"
+services:
+  server:
+    image: "jetbrains/teamcity-server:latest"
+    ports:
+      - "8111:8111"
+    volumes:
+      - ".docker-persist/datadir:/data/teamcity_server/datadir"
+      - ".docker-persist/logs:/opt/teamcity/logs"
+
+  linux-agent-1:
+    environment:
+      SERVER_URL: server
+      AGENT_NAME: docker-1
+    image: "jetbrains/teamcity-agent:EAP-linux"
+    volumes:
+      - ".docker-persist/agents/${AGENT_NAME}:/data/teamcity_agent/conf"
+
+  linux-agent-2:
+    environment:
+      SERVER_URL: server
+      AGENT_NAME: docker-2
+    image: "jetbrains/teamcity-agent:EAP-linux"
+    volumes:
+      - ".docker-persist/agents/${AGENT_NAME}:/data/teamcity_agent/conf"
+
+  linux-agent-3:
+    image: "jetbrains/teamcity-agent:EAP-windowsservercore"
+    environment:
+      SERVER_URL: server
+      AGENT_NAME: docker-3
+    volumes:
+      - ".docker-persist/agents/${AGENT_NAME}:C:/BuildAgent/conf"

@@ -6,27 +6,57 @@ class TeamCity:
     For the full reference please check out the official JetBrains documentation:
     https://www.jetbrains.com/help/teamcity/rest-api-reference.html
     """
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    headers = {"json": {"Content-Type": "application/json", "Accept": "application/json"},
+               "xml": {"Content-Type": "application/xml", "Accept": "application/xml"},
+               # "token": {"Authorization": "Bearer {}"}
+               }
 
-    def __init__(self, username, password, host='localhost', port=8111):
+    def __init__(self, username=None, password=None, token=None, host='localhost', port=8111, accept_type="json"):
         self.url = f"http://{host}:{port}/app/rest"
+        self.accept_type = accept_type
         self.username = username
         self.password = password
+        self.token = token
+        self.headers = self.headers[accept_type]
         self.__session = self.__start_session()
 
-    """
-    ================================================
-    Projects and Build Configuration/Templates Lists
-    ================================================
-    """
 
     def __start_session(self):
         session = requests.Session()
         session.auth = (self.username, self.password)
         return session
 
-    def __get(self, endpoint):
-        return self.__session.get(f"{self.url}/{endpoint}", headers=self.headers)
+    def __get(self, endpoint, params=None):
+        endpoint = f"{self.url}/{endpoint}"
+        return self.__session.get(endpoint, headers=self.headers, params=params)
+
+    def custom_request(self, endpoint, method="GET", headers=None, params=None, data=None):
+        headers = headers or self.headers
+        endpoint = f"{self.url}/{endpoint}"
+        return self.__session.request(
+            method=method,
+            url=endpoint,
+            headers=headers,
+            params=params,
+            data=data
+        )
+
+    def get_api_info(self):
+        if self.accept_type == "json":
+            endpoint = "swagger.json"
+        else:
+            endpoint = "application.wadl"
+        return self.__get(endpoint)
+
+    def get_server_info(self):
+        endpoint = "server"
+        return self.__get(endpoint)
+
+    """
+    ================================================
+    Projects and Build Configuration/Templates Lists
+    ================================================
+    """
 
     def get_projects(self):
         """
@@ -61,3 +91,60 @@ class TeamCity:
         """
         endpoint = f"projects/{project_locator}/buildTypes"
         return self.__get(endpoint)
+
+    # TODO: Project Settings
+    """
+    ================
+    Project Settings
+    ================
+    """
+
+    # TODO: Project Features
+    """
+    ================
+    Project Features
+    ================
+    """
+
+    # TODO: VCS Roots
+    """
+    =========
+    VCS Roots
+    =========
+    """
+    # TODO: Cloud Profiles
+    # TODO: Build Configuration And Template Settings
+    # TODO: Build Requests
+    # TODO: Tests and Build Problems
+    # TODO: Investigations
+    # TODO: Agents
+    """
+    ======
+    Agents
+    ======
+    """
+    def get_agents(self, locator=None):
+        """
+        List agents (only authorized agents are included by default)
+        :return:
+        """
+        endpoint = "agents"
+        params = {}
+        if locator:
+            params['locator'] = locator
+        return self.__get(endpoint, params)
+    def get_agent(self, agent_locator):
+        """
+
+        :param agent_locator:
+        :return:
+        """
+        endpoint = f"agents/{agent_locator}"
+        return self.__get(endpoint)
+    # TODO: Users
+    # TODO: Audit Records
+    # TODO: Data Backup
+    # TODO: Typed Parameters Specification
+    # TODO: Build Status Icon
+    # TODO: TeamCity Licensing Information Requests
+    # TODO: CCTray
