@@ -6,39 +6,51 @@ class TeamCity:
     For the full reference please check out the official JetBrains documentation:
     https://www.jetbrains.com/help/teamcity/rest-api-reference.html
     """
-    headers = {"json": {"Content-Type": "application/json", "Accept": "application/json"},
-               "xml": {"Content-Type": "application/xml", "Accept": "application/xml"},
-               # "token": {"Authorization": "Bearer {}"}
-               }
 
-    def __init__(self, username=None, password=None, token=None, host='localhost', port=8111, accept_type="json"):
+    __headers = {
+        "json": {"Content-Type": "application/json", "Accept": "application/json"},
+        "xml": {"Content-Type": "application/xml", "Accept": "application/xml"},
+    }
+
+    def __init__(
+        self,
+        username=None,
+        password=None,
+        token=None,
+        host="localhost",
+        port=8111,
+        accept_type="json",
+    ):
         self.url = f"http://{host}:{port}/app/rest"
         self.accept_type = accept_type
         self.username = username
         self.password = password
         self.token = token
-        self.headers = self.headers[accept_type]
+        self.headers = self.__headers[accept_type]
         self.__session = self.__start_session()
 
+    def __token_auth(self):
+        self.headers["Authorization"] = f"Bearer {self.token}"
 
     def __start_session(self):
         session = requests.Session()
-        session.auth = (self.username, self.password)
+        if self.token:
+            self.__token_auth()
+        else:
+            session.auth = (self.username, self.password)
         return session
 
     def __get(self, endpoint, params=None):
         endpoint = f"{self.url}/{endpoint}"
         return self.__session.get(endpoint, headers=self.headers, params=params)
 
-    def custom_request(self, endpoint, method="GET", headers=None, params=None, data=None):
+    def custom_request(
+        self, endpoint, method="GET", headers=None, params=None, data=None
+    ):
         headers = headers or self.headers
         endpoint = f"{self.url}/{endpoint}"
         return self.__session.request(
-            method=method,
-            url=endpoint,
-            headers=headers,
-            params=params,
-            data=data
+            method=method, url=endpoint, headers=headers, params=params, data=data
         )
 
     def get_api_info(self):
@@ -65,7 +77,10 @@ class TeamCity:
         endpoint = "projects"
         return self.__get(endpoint)
 
-    def get_project(self, project_locator, ):
+    def get_project(
+        self,
+        project_locator,
+    ):
         """
         Project details
         where project_locator can be id:<internal_project_id> or name:<project%20name>
@@ -123,6 +138,7 @@ class TeamCity:
     Agents
     ======
     """
+
     def get_agents(self, locator=None):
         """
         List agents (only authorized agents are included by default)
@@ -131,8 +147,9 @@ class TeamCity:
         endpoint = "agents"
         params = {}
         if locator:
-            params['locator'] = locator
+            params["locator"] = locator
         return self.__get(endpoint, params)
+
     def get_agent(self, agent_locator):
         """
 
@@ -141,6 +158,7 @@ class TeamCity:
         """
         endpoint = f"agents/{agent_locator}"
         return self.__get(endpoint)
+
     # TODO: Users
     # TODO: Audit Records
     # TODO: Data Backup
